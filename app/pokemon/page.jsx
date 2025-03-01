@@ -6,71 +6,81 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [pokemons, setPokemons] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    async function fetchPokemons() {
-      try {
-        const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=50');
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
+  async function fetchPokemons() {
+    try {
+      const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=50');
+      if (!res.ok) throw new Error('Failed to fetch data');
+      const data = await res.json();
 
-        if (data.results) {
-          // console.log(data.results)
-          const pokemonDetails = await Promise.all(
-            data?.results?.map(async (pokemon) => {
-              const pokeRes = await fetch(pokemon.url);
-              const pokeData = await pokeRes.json();
-              return {
-                name: pokemon?.name,
-                image: pokeData?.sprites?.front_default,
-                id: pokeData?.id,
-              };
-            })
-          );
-          setPokemons(pokemonDetails);
-        } else {
-          setPokemons([]);
-        }
-      } catch (error) {
-        console.error('Error fetching Pokemons:', error);
+      if (data.results) {
+        const pokemonDetails = await Promise.all(
+          data.results.map(async (pokemon) => {
+            const pokeRes = await fetch(pokemon.url);
+            const pokeData = await pokeRes.json();
+            return {
+              name: pokemon.name,
+              image: pokeData.sprites.front_default,
+              id: pokeData.id,
+            };
+          })
+        );
+        setPokemons(pokemonDetails);
+      } else {
         setPokemons([]);
       }
+    } catch (error) {
+      console.error('Error fetching Pokemons:', error);
+      setPokemons([]);
+    } finally {
+      setLoading(false);
     }
-    fetchPokemons();
-  }, []);
-
-  if (!pokemons.length) {
-    return <div className="text-center mt-10">Loading...</div>;
   }
+
 
   const filteredPokemons = pokemons.filter((pokemon) =>
     pokemon.name.toLowerCase().includes(search.toLowerCase())
   );
 
-//   const handleEdit = data => {
-//     router.push(`/home/${data.id}`)
-// }
-// console.log(filteredPokemons, "filteredPokemons")
+  useEffect(() => {
+    setMounted(true);
+    fetchPokemons();
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <h1 className="text-3xl font-bold text-center mb-4">Pokemon Explorer</h1>
-     <div className='text-center'>
-      <input
+      <div className='text-center'>
+        <input
           type="text"
           placeholder="Search Pokemon..."
           className="w-[320px] p-2 mb-4 border rounded"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-     </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {filteredPokemons.map((pokemon) => (
-          <Link key={pokemon.id} href={`/pokemon/${pokemon.id}`} className="p-4 bg-white shadow rounded text-center">
-            <img src={pokemon.image} alt={pokemon.name} className="w-24 h-24 mx-auto" />
-            <p className="mt-2 font-bold">{pokemon.name.toUpperCase()}</p>
-          </Link>
-        ))}
       </div>
+      {loading ? (
+        <div className="flex justify-center items-center my-10">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+        </div>
+      ) : filteredPokemons.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {filteredPokemons.map((pokemon) => (
+            <Link key={pokemon.id} href={`/pokemon/${pokemon.id}`} className="p-4 bg-white shadow rounded text-center">
+              <img src={pokemon.image} alt={pokemon.name} className="w-24 h-24 mx-auto" />
+              <p className="mt-2 font-bold">{pokemon.name.toUpperCase()}</p>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center mt-10 text-gray-600">No Pokemons found</div>
+      )}
+
     </div>
   );
 }

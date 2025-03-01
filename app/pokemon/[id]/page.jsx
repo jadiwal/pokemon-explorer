@@ -6,9 +6,10 @@ import { useParams } from 'next/navigation';
 function Page({ params }) {
     const { id } = use(params);
 
-    // const { id } = useParams();
+    const [loading, setLoading] = useState(true);
     const [pokemon, setPokemon] = useState(null);
-    console.log(id, "id")
+
+    // console.log(id, "id")
     useEffect(() => {
         async function fetchPokemon() {
             try {
@@ -25,17 +26,28 @@ function Page({ params }) {
                         name: s.stat.name,
                         value: s.base_stat,
                     })),
-                    moves: data.moves.slice(0, 5).map((m) => m.move.name), // Limiting moves to 5
+                    moves: data.moves.slice(0, 5).map((m) => m.move.name), 
                 });
             } catch (error) {
                 console.error('Error fetching Pokemon details:', error);
+            }finally {
+                setLoading(false); // Set loading to false after fetch completes
             }
         }
         fetchPokemon();
     }, [id]);
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+
     if (!pokemon) {
-        return <div className="text-center mt-10">Loading...</div>;
+        return <div className="text-center mt-10 text-red-500">Failed to load Pokemon details</div>;
     }
 
     return (
