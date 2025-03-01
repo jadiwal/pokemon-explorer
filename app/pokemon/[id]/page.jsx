@@ -8,6 +8,7 @@ function Page({ params }) {
 
     const [loading, setLoading] = useState(true);
     const [pokemon, setPokemon] = useState(null);
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
     // console.log(id, "id")
     useEffect(() => {
@@ -35,7 +36,21 @@ function Page({ params }) {
             }
         }
         fetchPokemon();
+
+
+        const checkSystemTheme = () => {
+            const darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            setIsDarkMode(darkMode);
+        };
+
+        checkSystemTheme();
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        mediaQuery.addEventListener("change", checkSystemTheme);
+
+        return () => mediaQuery.removeEventListener("change", checkSystemTheme);
     }, [id]);
+
+    
 
     if (loading) {
         return (
@@ -51,31 +66,35 @@ function Page({ params }) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
-            <h1 className="text-4xl font-bold mb-4 capitalize">{pokemon.name}</h1>
-            <img src={pokemon.image} alt={pokemon.name} className="w-48 h-48 mb-4" />
+        <div className={`min-h-screen p-4 flex flex-col items-center ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
+    
+        <h1 className={`text-4xl font-bold mb-4 capitalize ${isDarkMode ? "text-white" : "text-black"}`}>
+            {pokemon.name}
+        </h1>
 
-            <div className="bg-white p-4 rounded-lg shadow-md w-full max-w-lg">
-                <h2 className="text-2xl font-semibold mb-2">Abilities</h2>
-                <p>{pokemon.abilities.join(', ')}</p>
+        <img src={pokemon.image} alt={pokemon.name} className="w-48 h-48 mb-4" />
 
-                <h2 className="text-2xl font-semibold mt-4 mb-2">Types</h2>
-                <p>{pokemon.types.join(', ')}</p>
+        <div className={`p-4 rounded-lg shadow-md w-full max-w-lg ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
+            <h2 className="text-2xl font-semibold mb-2">Abilities</h2>
+            <p>{pokemon.abilities.join(', ')}</p>
 
-                <h2 className="text-2xl font-semibold mt-4 mb-2">Stats</h2>
-                <ul>
-                    {pokemon.stats.map((stat) => (
-                        <li key={stat.name} className="flex justify-between">
-                            <span>{stat.name}</span>
-                            <span className="font-bold">{stat.value}</span>
-                        </li>
-                    ))}
-                </ul>
+            <h2 className="text-2xl font-semibold mt-4 mb-2">Types</h2>
+            <p>{pokemon.types.join(', ')}</p>
 
-                <h2 className="text-2xl font-semibold mt-4 mb-2">Moves</h2>
-                <p>{pokemon.moves.join(', ')}</p>
-            </div>
+            <h2 className="text-2xl font-semibold mt-4 mb-2">Stats</h2>
+            <ul>
+                {pokemon.stats.map((stat) => (
+                    <li key={stat.name} className="flex justify-between">
+                        <span>{stat.name}</span>
+                        <span className="font-bold">{stat.value}</span>
+                    </li>
+                ))}
+            </ul>
+
+            <h2 className="text-2xl font-semibold mt-4 mb-2">Moves</h2>
+            <p>{pokemon.moves.join(', ')}</p>
         </div>
+    </div>
     )
 }
 

@@ -8,6 +8,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   async function fetchPokemons() {
     try {
@@ -49,38 +50,69 @@ export default function Home() {
     fetchPokemons();
   }, []);
 
+  // Detect system dark mode
+  useEffect(() => {
+    setMounted(true);
+    fetchPokemons();
+
+    const checkSystemTheme = () => {
+      const darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setIsDarkMode(darkMode);
+    };
+
+    checkSystemTheme();
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", checkSystemTheme);
+
+    return () => mediaQuery.removeEventListener("change", checkSystemTheme);
+  }, []);
   if (!mounted) {
     return null;
   }
-  return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold text-center mb-4">Pokemon Explorer</h1>
-      <div className='text-center'>
-        <input
-          type="text"
-          placeholder="Search Pokemon..."
-          className="w-[320px] p-2 mb-4 border rounded"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-      {loading ? (
-        <div className="flex justify-center items-center my-10">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
-        </div>
-      ) : filteredPokemons.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {filteredPokemons.map((pokemon) => (
-            <Link key={pokemon.id} href={`/pokemon/${pokemon.id}`} className="p-4 bg-white shadow rounded text-center">
-              <img src={pokemon.image} alt={pokemon.name} className="w-24 h-24 mx-auto" />
-              <p className="mt-2 font-bold">{pokemon.name.toUpperCase()}</p>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center mt-10 text-gray-600">No Pokemons found</div>
-      )}
 
+
+   
+  return (
+    <div className={`min-h-screen p-4 ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
+
+    <h1 className={`text-3xl font-bold text-center mb-4 ${isDarkMode ? "text-white" : "text-black"}`}>
+      Pokemon Explorer
+    </h1>
+  
+    <div className="text-center">
+      <input
+        type="text"
+        placeholder="Search Pokemon..."
+        className={`w-[320px] p-2 mb-4 border rounded ${isDarkMode ? "bg-gray-800 text-white border-gray-600" : "bg-white text-black border-gray-300"}`}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
     </div>
+  
+    {loading ? (
+      <div className="flex justify-center items-center my-10">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+      </div>
+    ) : filteredPokemons.length > 0 ? (
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {filteredPokemons.map((pokemon) => (
+          <Link
+            key={pokemon.id}
+            href={`/pokemon/${pokemon.id}`}
+            className={`p-4 shadow rounded text-center ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}
+          >
+            <img src={pokemon.image} alt={pokemon.name} className="w-24 h-24 mx-auto" />
+            <p className="mt-2 font-bold">{pokemon.name.toUpperCase()}</p>
+          </Link>
+        ))}
+      </div>
+    ) : (
+      <div className={`text-center mt-10 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+        No Pokemons found
+      </div>
+    )}
+  </div>
+  
   );
 }
